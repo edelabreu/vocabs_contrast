@@ -1,13 +1,13 @@
-import json
-import time
 from pprint import pprint
-from annoy import AnnoyIndex
+import time
+import json
+import weaviate
+
 from langchain.schema import Document
-from langchain_community.vectorstores import Annoy
-from langchain_community.docstore.in_memory import InMemoryDocstore
+from langchain_weaviate.vectorstores import WeaviateVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 
-language='es'
+language= 'es'
 
 def create_vector_store(model_name="sentence-transformers/all-mpnet-base-v2"):
     # Load Model
@@ -23,38 +23,30 @@ def create_vector_store(model_name="sentence-transformers/all-mpnet-base-v2"):
     for d in dataset:
         documents.append(Document(page_content=d['str'], metadata={'conceptLabel':d['conceptLabel'], 'conceptUri':d['conceptUri'], }))
     pprint('The amount of documents is '+str(len(documents)))
+
+    pprint('Connecting to weaviate vector database')
+    weaviate_client = weaviate.connect_to_local()
     
-    # Create index Annoy
-    pprint('Creating Annoy index')
-    metric='angular' # metric: Literal['angular', 'euclidean', 'manhattan', 'hamming', 'dot']
-    index = AnnoyIndex(
-        f=len(embeddings_model.embed_query(documents[0].page_content)), 
-        metric=metric) 
-    vector_store = Annoy(
-        embedding_function= embeddings_model,
-        index=index,
-        metric=metric,
-        docstore=InMemoryDocstore(),
-        index_to_docstore_id={},
-    )
     pprint('Indexing documents to the vector store')
     start = time.time()
-    annoy_db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
+    db = WeaviateVectorStore.from_documents(documents=documents, embedding= embeddings_model, client=weaviate_client)
     end = time.time()
-    return annoy_db, start, end
 
+    return db, weaviate_client, start, end
 
 model_name= 'sentence-transformers/all-MiniLM-L6-v2'
 k=10
 query= "educación"
-vector_store, start, end= create_vector_store(model_name=model_name)
+vector_store, weaviate_client, start, end= create_vector_store(model_name=model_name)
 pprint(f"Time for create or load vector store : {end - start:.4f} s")
 
 start = time.time()
-# TODO: Find information about `search_k` parameter and how it affects the result
+# Return list of documents most similar to the query text and `cosine distance` in float for each
 results = vector_store.similarity_search_with_score(query=query,k=k)
 end = time.time()
+weaviate_client.close()
+
 pprint(f"Search time: {end - start:.4f} s")
-results.sort( key=lambda x: x[1], reverse=True)
+
 for res in results:
     pprint(res)
