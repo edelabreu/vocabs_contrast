@@ -39,7 +39,11 @@ def create_vector_store(model_name="sentence-transformers/all-mpnet-base-v2"):
     )
     pprint('Indexing documents to the vector store')
     start = time.time()
-    annoy_db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
+    annoy_db = vector_store.from_documents(
+        documents=documents, 
+        embedding=embeddings_model,
+        n_trees=100, 
+        n_jobs=1)
     end = time.time()
     return annoy_db, start, end
 

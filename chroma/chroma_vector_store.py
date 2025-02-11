@@ -1,17 +1,16 @@
 from pprint import pprint
 import time
 import json
-import faiss
 
 from langchain.schema import Document
-from langchain_community.docstore.in_memory import InMemoryDocstore
-from langchain_community.vectorstores import FAISS
-from langchain_community.vectorstores.utils import DistanceStrategy
+from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
 language= 'es'
 
-def create_vector_store(model_name="sentence-transformers/all-mpnet-base-v2"):
+def create_vector_store(
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
+        collection_name='vocabs_all_MiniLM_L6_v2'):
     # Load Model
     embeddings_model= HuggingFaceEmbeddings(model_name=model_name)
 
@@ -25,28 +24,36 @@ def create_vector_store(model_name="sentence-transformers/all-mpnet-base-v2"):
     for d in dataset:
         documents.append(Document(page_content=d['str'], metadata={'conceptLabel':d['conceptLabel'], 'conceptUri':d['conceptUri'], }))
     pprint('The amount of documents is '+str(len(documents)))
-    # Create index FAISS
-    pprint('Creating FAISS index')
-    index = faiss.IndexFlat(len(embeddings_model.embed_query(documents[0].page_content)))
-    
-    vector_store = FAISS(
-        embedding_function=embeddings_model,
-        index=index,
-        docstore=InMemoryDocstore(),
-        index_to_docstore_id={},
-        distance_strategy= DistanceStrategy.COSINE
+
+    pprint('Create Vector store')
+    vector_store = Chroma(
+        collection_name= collection_name,
+        embedding_function= embeddings_model,
+        persist_directory= "../data/chroma_db",  # Where to save data locally
+        collection_metadata={"hnsw:space": "cosine"} 
     )
-    pprint('Indexing documents to the vector store')
+    ####
+    # Available distance metrics are: 'cosine', 'l2' and 'ip'.
+    # cosine: cosine
+    # l2: euclidean
+    # ip: max inner product
+
+    pprint('Store documents in the collection')
     start = time.time()
-    faiss_db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
+    vector_store.add_documents(
+        documents=documents, 
+        collection_metadata={"hnsw:space": "cosine"}
+    )
     end = time.time()
-    return faiss_db, start, end
+    return vector_store, start, end
 
 
-model_name= 'sentence-transformers/all-MiniLM-L6-v2'
 k=10
 query= "educación"
-vector_store, start, end= create_vector_store(model_name=model_name)
+vector_store, start, end= create_vector_store(
+                            model_name='sentence-transformers/all-MiniLM-L6-v2', 
+                            collection_name='vocabs_all_MiniLM_L6_v2')
+
 pprint(f"Time for create or load vector store : {end - start:.4f} s")
 
 start = time.time()
