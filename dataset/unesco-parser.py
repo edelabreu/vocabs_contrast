@@ -5,7 +5,7 @@ from pprint import pprint
 
 pprint('Loading the thesaurus')
 g = Graph()
-g.parse("./data/unesco-thesaurus.ttl")
+g.parse("../data/unesco-thesaurus.ttl")
 language= 'es'
 
 def unesco_query(lang='es'):
@@ -74,59 +74,39 @@ count = 0
 query_format = []
 
 pprint('formatting the result for the dataset')
-if language == 'es':
-    for row in qres:
+for row in qres:
+    if language == 'es':    
         altLabel= "" if row[2] is None else " también conocido como " + row[2] + ","
         scopeNote= "" if row[3] is None else " que se describe como " + row[3] 
-        query_format.append(
-            {'str': "El concepto " + row[1] + altLabel + scopeNote +" está relacionado a " + row[5]+", "+row[7],
-            'conceptUri': row[0].toPython(),
-            'conceptLabel': row[1],
-            'conceptAltLabel': row[2],
-            'conceptScopeNote': row[3],
-            'belongsTo': [
-                {
-                    'group':{
-                        'uri': row[4].toPython(),
-                        'label': row[5]
-                    },
-                    'domain': {
-                        'uri': row[6].toPython(),
-                        'label': row[7]
-                    }
-                }
-            ]
-            }
-        )
-        count += 1
-elif language == 'en':
-    for row in qres:
+        text= "El concepto " + row[1] + altLabel + scopeNote +" está relacionado a " + row[5]+", "+row[7]
+    elif language == 'en':
         altLabel= "" if row[2] is None else ", also known as " + row[2] + ","
         scopeNote= "" if row[3] is None else " which is described as " + row[3] 
+        text= "The concept " + row[1] + altLabel + scopeNote +" It is related to " + row[5]+", "+row[7]
         query_format.append(
-            {'str': "The concept " + row[1] + altLabel + scopeNote +" It is related to " + row[5]+", "+row[7],
-            'conceptUri': row[0].toPython(),
-            'conceptLabel': row[1],
-            'conceptAltLabel': row[2],
-            'conceptScopeNote': row[3],
-            'belongsTo': [
-                {
-                    'group':{
-                        'uri': row[4].toPython(),
-                        'label': row[5]
-                    },
-                    'domain': {
-                        'uri': row[6].toPython(),
-                        'label': row[7]
+            {
+                'str': text,
+                'conceptUri': row[0].toPython(),
+                'conceptLabel': row[1],
+                'conceptAltLabel': row[2],
+                'conceptScopeNote': row[3],
+                'belongsTo': [
+                    {
+                        'group':{
+                            'uri': row[4].toPython(),
+                            'label': row[5]
+                        },
+                        'domain': {
+                            'uri': row[6].toPython(),
+                            'label': row[7]
+                        }
                     }
-                }
-            ]
+                ]
             }
         )
         count += 1
-
 
 pprint(f'quantity of results processed: {count}')
 
-with open('./data/unesco-parser-'+language+'.json', 'w', encoding='utf-8') as f:
+with open('../data/unesco-parser-'+language+'.json', 'w', encoding='utf-8') as f:
     json.dump(query_format, f, ensure_ascii=False, indent=4)
