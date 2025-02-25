@@ -1,11 +1,37 @@
+"""
+Annoy is a vector database that uses **cocene distance** as a metric,
+This means that:
+    - Cosine similarity measures the orientation (or direction) of two vectors. 
+      It indicates how similar two vectors are in terms of their angle between them, 
+      consider their magnitude. Cosine similarity values are between -1 and 1.
+      The score is:
+        1 if the vectors are identical in terms of direction (the angle between them is 0°),
+        0 if they are perpendicular (the angle between them is 90°), and
+        -1 if they are opposite (the angle between them is 180°).
+
+    - Cosine distance is simply the difference between 1 and cosine similarity. 
+      It is used to measure the difference between vectors rather than their similarity, 
+      and its value is in the range of 0 to 2
+      The score is:
+        0 means the vectors are identical (cosine similarity is 1).
+        1 means the vectors are perpendicular (cosine similarity is 0).
+        2 means the vectors are completely opposite (cosine similarity is -1).
+
+Can also be configured with other metrics
+    ["angular", "euclidean", "manhattan", "hamming", "dot"]
+
+Official documentation
+    https://github.com/spotify/annoy
+
+    Cosine distance is equivalent to Euclidean distance of normalized vectors = sqrt(2-2*cos(u, v))
+"""
+
 import json
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
 import pandas as pd
 
-from enum import Enum
 from pprint import pprint
 from annoy import AnnoyIndex
 from langchain.schema import Document
@@ -139,7 +165,7 @@ if search_button:
     end = time.time()
     st.write(f"Search time: {end - start:.4f} s")
     
-    results.sort( key=lambda x: x[1], reverse=True)
+    # results.sort( key=lambda x: x[1], reverse=True)
     
     # 4. Precision, Recall, and F1-Score vs. Top-k Retrieved
 
@@ -155,6 +181,9 @@ if search_button:
     # alpha = 0.05
     thresholds = np.linspace(start=0, stop=1, num=100, dtype='float32')
 
+    # TODO: Since Annoy uses cosine distance, 
+    # the prediction values ​​must be inverted since the closer they are to zero, 
+    # the better the result.
     for threshold in thresholds:
         # Determine relevant documents based on threshold
         # If the result is above the threshold, they are relevant.
