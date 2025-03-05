@@ -12,7 +12,7 @@ URI= "http://localhost:19530"
 # Load dataset
 def create_vector_store(
         model_name="sentence-transformers/all-mpnet-base-v2", 
-        collection_name='vocabs', 
+        collection_name='vocabs-test', 
         create_index=False):
     
     # Load Model
@@ -20,15 +20,30 @@ def create_vector_store(
     # embeddings= embeddings_model.embed_documents(documents)
 
     if create_index:
-        pprint('Load dataset')
-        with open('../data/unesco-parser-'+language+'.json', 'r', encoding='utf-8') as f:
-            dataset= json.load(f)
-
-        # Convert to LangChain documents
-        pprint('Convert to LangChain documents')
         documents= []
-        for d in dataset:
-            documents.append(Document(page_content=d['str'], metadata={'conceptLabel':d['conceptLabel'], 'conceptUri':d['conceptUri'], }))
+        pprint('Load unesco-dataset')
+        with open('../data/unesco-dataset-'+language+'.json', 'r', encoding='utf-8') as f:
+            unesco_dataset= json.load(f)
+
+        pprint('Convert to LangChain documents')
+        for d in unesco_dataset:
+            documents.append(Document(page_content=d['str'], metadata={'conceptLabel':d['conceptLabel'][0], 'conceptUri':d['conceptUri'], }))
+        
+        pprint('Load agrovoc-dataset')
+        with open('../data/agrovoc-dataset-'+language+'.json', 'r', encoding='utf-8') as f:
+            agrovoc_dataset= json.load(f)
+
+        pprint('Convert to LangChain documents')
+        for d in agrovoc_dataset:
+            documents.append(Document(page_content=d['str'], metadata={'conceptLabel':d['conceptLabel'][0], 'conceptUri':d['conceptUri'], }))
+        
+        pprint('Load eurovoc-dataset')
+        with open('../data/eurovoc-dataset-'+language+'.json', 'r', encoding='utf-8') as f:
+            eurovoc_dataset= json.load(f)
+
+        pprint('Convert to LangChain documents')
+        for d in eurovoc_dataset:
+            documents.append(Document(page_content=d['str'], metadata={'conceptLabel':d['conceptLabel'][0], 'conceptUri':d['conceptUri'], }))
         
         # uuids = [str(uuid4()) for _ in range(len(documents))]
         pprint('Create Vector store')
@@ -36,7 +51,15 @@ def create_vector_store(
                     embedding_function= embeddings_model,
                     collection_name= collection_name,
                     connection_args={"uri": URI},
-                    index_params={"index_type": "FLAT", "metric_type": "COSINE"},
+                    index_params={
+                                "index_type": "IVF_PQ", 
+                                "metric_type": "COSINE", 
+                                "params": {
+                                    "nlist": 1024,  # Número de listas
+                                    "m": 8,         # Número de subcódigos
+                                    "nbits": 8      # Número de bits por subcódigo
+                                }
+                            },
                     enable_dynamic_field= True
                 )
         # vector_store.add_documents(documents=documents, ids=uuids)
@@ -48,7 +71,15 @@ def create_vector_store(
                             embedding=embeddings_model, 
                             collection_name= collection_name,
                             connection_args={"uri": URI},
-                            index_params={"index_type": "FLAT", "metric_type": "COSINE"},
+                            index_params={
+                                "index_type": "IVF_PQ", 
+                                "metric_type": "COSINE", 
+                                "params": {
+                                    "nlist": 1024,  # Número de listas
+                                    "m": 8,         # Número de subcódigos
+                                    "nbits": 8      # Número de bits por subcódigo
+                                }
+                            },
                         )
         end = time.time()
         return milvus_db, start, end

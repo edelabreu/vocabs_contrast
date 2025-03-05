@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Edel Abreu <edelabreuhernandez@gmail.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -19,6 +20,7 @@ faiss-cpu = "^1.10.0"
 annoy = "^1.17.3"
 streamlit = "^1.42.2"
 seaborn = "^0.13.2"
+psutil = "^7.0.0"
 
 
 [build-system]
