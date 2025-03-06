@@ -5,6 +5,7 @@ import time
 import faiss
 import psutil
 import pandas as pd
+import numpy as np
 
 from pprint import pprint
 
@@ -167,6 +168,11 @@ for language in LANGUAGE:
 
         # saving data
         stats.append(row)
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
         
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
@@ -207,7 +213,12 @@ for language in LANGUAGE:
 
         # saving data
         stats.append(row)
+        df = pd.DataFrame([row])
 
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
         row = []
@@ -247,6 +258,12 @@ for language in LANGUAGE:
 
         # saving data
         stats.append(row)
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
 
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
@@ -287,6 +304,12 @@ for language in LANGUAGE:
 
         # saving data
         stats.append(row)
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
 
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
@@ -327,6 +350,12 @@ for language in LANGUAGE:
 
         # saving data
         stats.append(row)
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
 
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
@@ -368,8 +397,12 @@ for language in LANGUAGE:
         # saving data
         stats.append(row)
 
+        df = pd.DataFrame([row])
 
-
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
 
 
 
@@ -408,6 +441,12 @@ for language in LANGUAGE:
         
         # saving data
         stats.append(row)
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
 
         # --------------------------------------------------------------------------------------
         pprint('Creating Milvus index')
@@ -442,6 +481,12 @@ for language in LANGUAGE:
         
         # saving data
         stats.append(row)
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
 
         # --------------------------------------------------------------------------------------
         pprint('Creating Milvus index')
@@ -476,6 +521,12 @@ for language in LANGUAGE:
         
         # saving data
         stats.append(row)
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
 
         # --------------------------------------------------------------------------------------
         pprint('Creating Milvus index')
@@ -528,7 +579,12 @@ for language in LANGUAGE:
         # saving data
         stats.append(row)
 
+        df = pd.DataFrame([row])
 
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
 
         # --------------------------------------------------------------------------------------
         # --------------------------------------------------------------------------------------
@@ -575,7 +631,113 @@ for language in LANGUAGE:
         # saving data
         stats.append(row)
 
-    df = pd.DataFrame(stats)
+        df = pd.DataFrame([row])
 
-    # Guardar el DataFrame en un archivo Excel
-    df.to_excel('../data/dataset-vector-space.xlsx', index=False, header=False)
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
+
+
+        # --------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------
+        pprint('Creating CHROMA index')
+        from langchain_chroma import Chroma
+        row = []
+        # saving model's name
+        row.append(m['name'])
+        
+        # saving index's name
+        index_name ='index' 
+        metric='angular' # metric: Literal['angular', 'euclidean', 'manhattan', 'hamming', 'dot']
+        folder_path=f"{PATH}/chroma_db/{metric}_{m['str']}_{language}"
+        row.append(folder_path)
+
+        time_start, memory_start, cpu_start = get_resources(True)
+        # Chroma does not have to calculate an index build time
+        time_end, memory_end, cpu_end = get_resources()
+        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+
+        time_start, memory_start, cpu_start = get_resources(True)
+        vector_store = Chroma(
+            collection_name= collection_name,
+            embedding_function= embeddings_model,
+            persist_directory= folder_path,  # Where to save data locally
+            collection_metadata={"hnsw:space": "cosine"} 
+        )
+        time_end, memory_end, cpu_end = get_resources()
+        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+
+        time_start, memory_start, cpu_start = get_resources(True)
+        db = vector_store.from_documents(documents=documents, embedding=embeddings_model, collection_metadata={"hnsw:space": "cosine"})
+        time_end, memory_end, cpu_end = get_resources()
+        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        
+        time_start, memory_start, cpu_start = get_resources(True)
+        # db.save_local(folder_path=folder_path)
+        # Chroma does not have to calculate an index save time
+        time_end, memory_end, cpu_end = get_resources()
+        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+
+        # saving data
+        stats.append(row)
+
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
+
+
+
+        # --------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------
+        pprint('Creating WEAVIATE index')
+        import weaviate
+        from langchain_weaviate.vectorstores import WeaviateVectorStore
+        row = []
+        # saving model's name
+        row.append(m['name'])
+        
+        # saving index's name
+        index_name ='index' 
+        metric='angular' # metric: Literal['angular', 'euclidean', 'manhattan', 'hamming', 'dot']
+        folder_path=f"{PATH}/chroma_db/{metric}_{m['str']}_{language}"
+        row.append(folder_path)
+
+        time_start, memory_start, cpu_start = get_resources(True)
+        weaviate_client = weaviate.connect_to_local(
+            host= '192.168.50.20'
+        )
+        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+
+        time_start, memory_start, cpu_start = get_resources(True)
+        # Weaviate does not have to calculate a time to create the vector space
+        time_end, memory_end, cpu_end = get_resources()
+        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+
+        time_start, memory_start, cpu_start = get_resources(True)
+        db = WeaviateVectorStore.from_documents(documents=documents, embedding= embeddings_model, client=weaviate_client)
+        time_end, memory_end, cpu_end = get_resources()
+        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        
+        time_start, memory_start, cpu_start = get_resources(True)
+        # db.save_local(folder_path=folder_path)
+        # Weaviate does not have to calculate an index save time
+        time_end, memory_end, cpu_end = get_resources()
+        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+
+        # saving data
+        stats.append(row)
+
+        df = pd.DataFrame([row])
+
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
+
+        
