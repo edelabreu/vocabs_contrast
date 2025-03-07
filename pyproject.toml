@@ -21,6 +21,7 @@ annoy = "^1.17.3"
 streamlit = "^1.42.2"
 seaborn = "^0.13.2"
 psutil = "^7.0.0"
+openpyxl = "^3.1.5"
 
 
 [build-system]

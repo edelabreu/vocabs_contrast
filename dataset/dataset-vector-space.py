@@ -2,6 +2,7 @@
 import os
 import json
 import time
+import chromadb
 import faiss
 import psutil
 import pandas as pd
@@ -17,28 +18,19 @@ from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_community.vectorstores.utils import DistanceStrategy
 from langchain_huggingface import HuggingFaceEmbeddings
 
-# construir los espacios vectoriales para cada base de dato y cada tipo de indice
-def get_resources(is_start = False):
-    if is_start:
-        process = psutil.Process(os.getpid())  # get the current process
-        memory = process.memory_info().rss  
-        cpu = process.cpu_percent(interval=0.1) 
-        timer = time.time()
-    else:
-        timer = time.time()
-        process = psutil.Process(os.getpid())  # get the current process
-        memory = process.memory_info().rss  
-        cpu = process.cpu_percent(interval=0.1) 
-    return timer, memory, cpu
+process = psutil.Process(os.getpid())
 
-def calc_resources(row:list, time_start:float, time_end:float, memory_start, memory_end, cpu_start:float, cpu_end:float):
-    
-    time_difference_s = (time_end - time_start)
-    row.append(time_difference_s)
-    row.append(time_difference_s * 10**3)
-    row.append(memory_end - memory_start)
-    row.append(cpu_end - cpu_start)
-
+def get_resources(row:list|None = None, time_start: float = None):
+    memory = process.memory_info().rss  
+    cpu = process.cpu_percent(interval=0.1) 
+    timer = time.time()
+    if row is None:
+        return timer, memory, cpu
+    else: 
+        row.append((timer - time_start) * 1000) # time in MS
+        row.append(timer - time_start) # time in S
+        row.append(f"{memory / (1024 * 1024):.2f}")
+        row.append(cpu)
 
 
 LANGUAGE = ['es', 'en']
@@ -119,13 +111,10 @@ for language in LANGUAGE:
 
     pprint(f"Execution for the {language.upper()} language")
     pprint(f"The amount of documents is: {len(documents)}")
-    # pprint(f"Execution time of program is: {time_difference_s} s")
-    # pprint(f"Execution time of program is: {time_difference_ms} ms") 
-    # pprint(f"Used memory (in bytes): {memory_end - memory_start}")
-    # pprint(f"Used CPU (%): {cpu_end - cpu_start}")
 
-
-    stats = []
+    # --------------------------------------------------------------------------------------
+    # FAISS --------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
     for m in MODELS:
         embeddings_model= HuggingFaceEmbeddings(model_name=m['name'])
         pprint(m['name'])
@@ -140,12 +129,12 @@ for language in LANGUAGE:
         folder_path=f"{PATH}/faiss_db/IndexFlat_{m['str']}_{language}"
         row.append(folder_path)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         index = faiss.IndexFlat(m['size'])
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-
-        time_start, memory_start, cpu_start = get_resources(True)
+        get_resources(row, time_start)
+        
+        
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = FAISS(
             embedding_function=embeddings_model,
             index=index,
@@ -153,26 +142,30 @@ for language in LANGUAGE:
             index_to_docstore_id={},
             distance_strategy= DistanceStrategy.COSINE
         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
         time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
-        time_start, memory_start, cpu_start = get_resources(True)
+        get_resources(row, time_start)
+
+        time_start, memory_start, cpu_start = get_resources()
         db.save_local(folder_path=folder_path, index_name=index_name)
         time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
+        time_start, memory_start, cpu_start = get_resources()
+        db.load_local(folder_path=folder_path, index_name=index_name, embeddings=embeddings_model, allow_dangerous_deserialization=True)
+        get_resources(row, time_start)
+        
         # saving data
-        stats.append(row)
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        
+        time.sleep(5)
         
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
@@ -187,8 +180,7 @@ for language in LANGUAGE:
 
         time_start, memory_start, cpu_start = get_resources(True)
         index = faiss.IndexHNSW(m['size'])
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         vector_store = FAISS(
@@ -198,27 +190,28 @@ for language in LANGUAGE:
             index_to_docstore_id={},
             distance_strategy= DistanceStrategy.COSINE
         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
+        get_resources(row, time_start)
+
         time_start, memory_start, cpu_start = get_resources(True)
         db.save_local(folder_path=folder_path, index_name=index_name)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
+        time_start, memory_start, cpu_start = get_resources()
+        db.load_local(folder_path=folder_path, index_name=index_name, embeddings=embeddings_model, allow_dangerous_deserialization=True)
+        get_resources(row, time_start)
+        
         # saving data
-        stats.append(row)
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
         
+        time.sleep(5)
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
         row = []
@@ -232,8 +225,7 @@ for language in LANGUAGE:
 
         time_start, memory_start, cpu_start = get_resources(True)
         index = faiss.index_factory(m['size'], "IVF1000_NSG64,Flat") #faiss.IndexIVFFlat(m['size'])
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         vector_store = FAISS(
@@ -243,27 +235,27 @@ for language in LANGUAGE:
             index_to_docstore_id={},
             distance_strategy= DistanceStrategy.COSINE
         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
+        get_resources(row, time_start)
+
         time_start, memory_start, cpu_start = get_resources(True)
         db.save_local(folder_path=folder_path, index_name=index_name)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
+        
+        time_start, memory_start, cpu_start = get_resources()
+        db.load_local(folder_path=folder_path, index_name=index_name, embeddings=embeddings_model, allow_dangerous_deserialization=True)
+        get_resources(row, time_start)
 
         # saving data
-        stats.append(row)
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
@@ -278,8 +270,7 @@ for language in LANGUAGE:
 
         time_start, memory_start, cpu_start = get_resources(True)
         index = faiss.index_factory(m['size'], "IVF1000_NSG64,PQ2x8") #faiss.IndexIVFPQ(m['size'])
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         vector_store = FAISS(
@@ -289,27 +280,26 @@ for language in LANGUAGE:
             index_to_docstore_id={},
             distance_strategy= DistanceStrategy.COSINE
         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
+        get_resources(row, time_start)
+
         time_start, memory_start, cpu_start = get_resources(True)
         db.save_local(folder_path=folder_path, index_name=index_name)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
+        time_start, memory_start, cpu_start = get_resources()
+        db.load_local(folder_path=folder_path, index_name=index_name, embeddings=embeddings_model, allow_dangerous_deserialization=True)
+        get_resources(row, time_start)
         # saving data
-        stats.append(row)
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
@@ -324,8 +314,7 @@ for language in LANGUAGE:
 
         time_start, memory_start, cpu_start = get_resources(True)
         index = faiss.IndexLSH(m['size'], 23)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         vector_store = FAISS(
@@ -335,27 +324,26 @@ for language in LANGUAGE:
             index_to_docstore_id={},
             distance_strategy= DistanceStrategy.COSINE
         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
+        get_resources(row, time_start)
+
         time_start, memory_start, cpu_start = get_resources(True)
         db.save_local(folder_path=folder_path, index_name=index_name)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
+        time_start, memory_start, cpu_start = get_resources()
+        db.load_local(folder_path=folder_path, index_name=index_name, embeddings=embeddings_model, allow_dangerous_deserialization=True)
+        get_resources(row, time_start)
         # saving data
-        stats.append(row)
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
         # --------------------------------------------------------------------------------------
         pprint('Creating FAISS index')
@@ -370,8 +358,7 @@ for language in LANGUAGE:
 
         time_start, memory_start, cpu_start = get_resources(True)
         index = faiss.index_factory(m['size'], "NSG64,PQ2x8") #faiss.IndexPQ(m['size'])
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         vector_store = FAISS(
@@ -381,34 +368,34 @@ for language in LANGUAGE:
             index_to_docstore_id={},
             distance_strategy= DistanceStrategy.COSINE
         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources(True)
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
+        get_resources(row, time_start)
+
         time_start, memory_start, cpu_start = get_resources(True)
         db.save_local(folder_path=folder_path, index_name=index_name)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
+
+        time_start, memory_start, cpu_start = get_resources()
+        db.load_local(folder_path=folder_path, index_name=index_name, embeddings=embeddings_model, allow_dangerous_deserialization=True)
+        get_resources(row, time_start)
 
         # saving data
-        stats.append(row)
-
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
 
 
-        # --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    # MILVUS -------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    for m in MODELS:
         pprint('Creating Milvus index')
         row = []
         # saving model's name
@@ -417,8 +404,13 @@ for language in LANGUAGE:
         # saving index's name
         collection_name=f"IndexFLAT_{m['str']}_{language}"
         row.append(collection_name)
+        # Milvus does not have an index generator
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = Milvus(
                     embedding_function= embeddings_model,
                     collection_name= collection_name,
@@ -426,27 +418,39 @@ for language in LANGUAGE:
                     index_params={"index_type": "FLAT", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
                     enable_dynamic_field= True
                 )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(
                             documents=documents, 
                             embedding=embeddings_model,
                             collection_name= collection_name,
                             connection_args={"uri": Milvus_URI},
                             index_params={"index_type": "FLAT", "metric_type": "COSINE"})
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
+        get_resources(row, time_start)
+
+        # Milvus does not save locally
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+
+        # load data from database 
+        time_start, memory_start, cpu_start = get_resources()
+        milvus_db = Milvus(
+                embeddings_model,
+                connection_args={"uri": Milvus_URI},
+                collection_name= collection_name,
+            )
+        get_resources(row, time_start)
         # saving data
-        stats.append(row)
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
         
+        time.sleep(5)
 
         # --------------------------------------------------------------------------------------
         pprint('Creating Milvus index')
@@ -457,8 +461,12 @@ for language in LANGUAGE:
         # saving index's name
         collection_name=f"IndexIVF_FLAT_{m['str']}_{language}"
         row.append(collection_name)
-
-        time_start, memory_start, cpu_start = get_resources(True)
+        # Milvus does not have an index generator
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = Milvus(
                     embedding_function= embeddings_model,
                     collection_name= collection_name,
@@ -466,27 +474,39 @@ for language in LANGUAGE:
                     index_params={"index_type": "IVF_FLAT", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
                     enable_dynamic_field= True
                 )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(
                             documents=documents, 
                             embedding=embeddings_model,
                             collection_name= collection_name,
                             connection_args={"uri": Milvus_URI},
                             index_params={"index_type": "IVF_FLAT", "metric_type": "COSINE"})
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
+
+        # Milvus does not save locally
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+
+        # load data from database 
+        time_start, memory_start, cpu_start = get_resources()
+        milvus_db = Milvus(
+                embeddings_model,
+                connection_args={"uri": Milvus_URI},
+                collection_name= collection_name,
+            )
+        get_resources(row, time_start)
         
-        # saving data
-        stats.append(row)
+        # saving data        
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
         # --------------------------------------------------------------------------------------
         pprint('Creating Milvus index')
@@ -497,8 +517,12 @@ for language in LANGUAGE:
         # saving index's name
         collection_name=f"IndexHNSW_{m['str']}_{language}"
         row.append(collection_name)
-
-        time_start, memory_start, cpu_start = get_resources(True)
+        # Milvus does not have an index generator
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = Milvus(
                     embedding_function= embeddings_model,
                     collection_name= collection_name,
@@ -506,27 +530,37 @@ for language in LANGUAGE:
                     index_params={"index_type": "HNSW", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
                     enable_dynamic_field= True
                 )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(
                             documents=documents, 
                             embedding=embeddings_model,
                             collection_name= collection_name,
                             connection_args={"uri": Milvus_URI},
                             index_params={"index_type": "HNSW", "metric_type": "COSINE"})
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
+        get_resources(row, time_start)
+        # Milvus does not save locally
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+
+        # load data from database 
+        time_start, memory_start, cpu_start = get_resources()
+        milvus_db = Milvus(
+                embeddings_model,
+                connection_args={"uri": Milvus_URI},
+                collection_name= collection_name,
+            )
+        get_resources(row, time_start)
         # saving data
-        stats.append(row)
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
         # --------------------------------------------------------------------------------------
         pprint('Creating Milvus index')
@@ -537,8 +571,12 @@ for language in LANGUAGE:
         # saving index's name
         collection_name=f"IndexIVF_PQ_{m['str']}_{language}"
         row.append(collection_name)
-
-        time_start, memory_start, cpu_start = get_resources(True)
+        # Milvus does not have an index generator
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = Milvus(
                     embedding_function= embeddings_model,
                     collection_name= collection_name,
@@ -554,10 +592,9 @@ for language in LANGUAGE:
                     }, #FLAT, HNSW, IVF_FLAT, IVF_PQ
                     enable_dynamic_field= True
                 )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(
                             documents=documents, 
                             embedding=embeddings_model,
@@ -573,22 +610,33 @@ for language in LANGUAGE:
                                 }
                             }
                         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
-        # saving data
-        stats.append(row)
+        get_resources(row, time_start)
+        # Milvus does not save locally
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
+        # load data from database 
+        time_start, memory_start, cpu_start = get_resources()
+        milvus_db = Milvus(
+                embeddings_model,
+                connection_args={"uri": Milvus_URI},
+                collection_name= collection_name,
+            )
+        get_resources(row, time_start)
+        # saving data
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
-        # --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    # ANNOY --------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    for m in MODELS:
         pprint('Creating ANNOY index')
         row = []
         # saving model's name
@@ -600,14 +648,13 @@ for language in LANGUAGE:
         folder_path=f"{PATH}/annoy_db/{metric}_{m['str']}_{language}"
         row.append(folder_path)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         index = AnnoyIndex(
             f=m['size'], 
             metric=metric) 
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = Annoy(
             embedding_function= embeddings_model,
             index=index,
@@ -615,33 +662,33 @@ for language in LANGUAGE:
             docstore=InMemoryDocstore(),
             index_to_docstore_id={},
         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-        
-        time_start, memory_start, cpu_start = get_resources(True)
+        get_resources(row, time_start)
+
+        time_start, memory_start, cpu_start = get_resources()
         db.save_local(folder_path=folder_path)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
+        time_start, memory_start, cpu_start = get_resources()
+        db.load_local(folder_path=folder_path, embeddings=embeddings_model, allow_dangerous_deserialization=True)
+        get_resources(row, time_start)
+        
         # saving data
-        stats.append(row)
-
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
 
-        # --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    # CHROMA -------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    for m in MODELS:
         pprint('Creating CHROMA index')
         from langchain_chroma import Chroma
         row = []
@@ -650,51 +697,52 @@ for language in LANGUAGE:
         
         # saving index's name
         index_name ='index' 
-        metric='angular' # metric: Literal['angular', 'euclidean', 'manhattan', 'hamming', 'dot']
-        folder_path=f"{PATH}/chroma_db/{metric}_{m['str']}_{language}"
+        folder_path=f"{PATH}/chroma_db/{index_name}_{m['str']}_{language}"
         row.append(folder_path)
 
-        time_start, memory_start, cpu_start = get_resources(True)
         # Chroma does not have to calculate an index build time
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = Chroma(
             collection_name= collection_name,
             embedding_function= embeddings_model,
             persist_directory= folder_path,  # Where to save data locally
             collection_metadata={"hnsw:space": "cosine"} 
         )
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model, collection_metadata={"hnsw:space": "cosine"})
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
+
+        time_start, memory_start, cpu_start = get_resources()
+        db.persist()
+        get_resources(row, time_start)
         
-        time_start, memory_start, cpu_start = get_resources(True)
-        # db.save_local(folder_path=folder_path)
-        # Chroma does not have to calculate an index save time
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-
+        from chromadb.config import Settings
+        time_start, memory_start, cpu_start = get_resources()
+        client = chromadb.Client(Settings(chroma_db_impl="duckdb+parquet", persist_directory=folder_path))
+        db = Chroma(client=client, embedding_function=embeddings_model)
+        get_resources(row, time_start)
+        
         # saving data
-        stats.append(row)
-
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
 
 
-        # --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    # WEAVIATE -----------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    for m in MODELS:
         pprint('Creating WEAVIATE index')
         import weaviate
         from langchain_weaviate.vectorstores import WeaviateVectorStore
@@ -703,41 +751,57 @@ for language in LANGUAGE:
         row.append(m['name'])
         
         # saving index's name
-        index_name ='index' 
-        metric='angular' # metric: Literal['angular', 'euclidean', 'manhattan', 'hamming', 'dot']
-        folder_path=f"{PATH}/chroma_db/{metric}_{m['str']}_{language}"
-        row.append(folder_path)
+        index_name=f"weaviate_index_{m['str']}_{language}"
+        row.append(index_name)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        weaviate_host = '192.168.50.20'
+
+        time_start, memory_start, cpu_start = get_resources()
         weaviate_client = weaviate.connect_to_local(
-            host= '192.168.50.20'
+            host= weaviate_host
         )
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
         # Weaviate does not have to calculate a time to create the vector space
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
-        time_start, memory_start, cpu_start = get_resources(True)
-        db = WeaviateVectorStore.from_documents(documents=documents, embedding= embeddings_model, client=weaviate_client)
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
+        time_start, memory_start, cpu_start = get_resources()
+        db = WeaviateVectorStore.from_documents(
+                                    documents=documents, 
+                                    embedding= embeddings_model, 
+                                    client=weaviate_client
+                                )
+        get_resources(row, time_start)
+
+        # Weaviate does not have to calculate save_local time
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+
+        weaviate_client.close()
+
+        time_start, memory_start, cpu_start = get_resources()
+        weaviate_client = weaviate.connect_to_local(
+            host= weaviate_host
+        )
+        weaviate_store = WeaviateVectorStore(
+                            weaviate_client, 
+                            embedding_function=embeddings_model, 
+                            index_name=index_name
+                        )
+        weaviate_client.close()
+        get_resources(row, time_start)
         
-        time_start, memory_start, cpu_start = get_resources(True)
-        # db.save_local(folder_path=folder_path)
-        # Weaviate does not have to calculate an index save time
-        time_end, memory_end, cpu_end = get_resources()
-        calc_resources(row, time_start, time_end, memory_start, memory_end, cpu_start, cpu_end)
-
         # saving data
-        stats.append(row)
-
         df = pd.DataFrame([row])
 
         with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
             df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-        
+        time.sleep(5)
 
         
