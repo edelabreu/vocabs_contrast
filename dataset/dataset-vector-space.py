@@ -178,11 +178,11 @@ for language in LANGUAGE:
         folder_path=f"{PATH}/faiss_db/IndexHNSW_{m['str']}_{language}"
         row.append(folder_path)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         index = faiss.IndexHNSW(m['size'])
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = FAISS(
             embedding_function=embeddings_model,
             index=index,
@@ -192,11 +192,11 @@ for language in LANGUAGE:
         )
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db.save_local(folder_path=folder_path, index_name=index_name)
         get_resources(row, time_start)
 
@@ -223,11 +223,11 @@ for language in LANGUAGE:
         folder_path=f"{PATH}/faiss_db/IndexIVFFlat_{m['str']}_{language}"
         row.append(folder_path)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         index = faiss.index_factory(m['size'], "IVF1000_NSG64,Flat") #faiss.IndexIVFFlat(m['size'])
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = FAISS(
             embedding_function=embeddings_model,
             index=index,
@@ -237,11 +237,11 @@ for language in LANGUAGE:
         )
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db.save_local(folder_path=folder_path, index_name=index_name)
         get_resources(row, time_start)
         
@@ -268,11 +268,11 @@ for language in LANGUAGE:
         folder_path=f"{PATH}/faiss_db/IndexIVFPQ_{m['str']}_{language}"
         row.append(folder_path)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         index = faiss.index_factory(m['size'], "IVF1000_NSG64,PQ2x8") #faiss.IndexIVFPQ(m['size'])
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = FAISS(
             embedding_function=embeddings_model,
             index=index,
@@ -282,11 +282,11 @@ for language in LANGUAGE:
         )
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db.save_local(folder_path=folder_path, index_name=index_name)
         get_resources(row, time_start)
 
@@ -312,11 +312,11 @@ for language in LANGUAGE:
         folder_path=f"{PATH}/faiss_db/IndexLSH_{m['str']}_{language}"
         row.append(folder_path)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         index = faiss.IndexLSH(m['size'], 23)
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = FAISS(
             embedding_function=embeddings_model,
             index=index,
@@ -326,11 +326,11 @@ for language in LANGUAGE:
         )
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db.save_local(folder_path=folder_path, index_name=index_name)
         get_resources(row, time_start)
 
@@ -356,11 +356,11 @@ for language in LANGUAGE:
         folder_path=f"{PATH}/faiss_db/IndexPQ_{m['str']}_{language}"
         row.append(folder_path)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         index = faiss.index_factory(m['size'], "NSG64,PQ2x8") #faiss.IndexPQ(m['size'])
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         vector_store = FAISS(
             embedding_function=embeddings_model,
             index=index,
@@ -370,11 +370,11 @@ for language in LANGUAGE:
         )
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
         get_resources(row, time_start)
 
-        time_start, memory_start, cpu_start = get_resources(True)
+        time_start, memory_start, cpu_start = get_resources()
         db.save_local(folder_path=folder_path, index_name=index_name)
         get_resources(row, time_start)
 
