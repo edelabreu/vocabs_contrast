@@ -392,304 +392,306 @@ for language in LANGUAGE:
 
 
 
-    # # --------------------------------------------------------------------------------------
-    # # MILVUS -------------------------------------------------------------------------------
-    # # --------------------------------------------------------------------------------------
-    # for m in MODELS:
-    #     pprint('Creating Milvus index')
-    #     row = []
-    #     # saving model's name
-    #     row.append(m['name'])
+    # --------------------------------------------------------------------------------------
+    # MILVUS -------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    for m in MODELS:
+        embeddings_model= HuggingFaceEmbeddings(model_name=m['name'])
+        pprint('Creating Milvus index')
+        row = []
+        # saving model's name
+        row.append(m['name'])
         
-    #     # saving index's name
-    #     collection_name=f"IndexFLAT_{m['str']}_{language}"
-    #     row.append(collection_name)
-    #     # Milvus does not have an index generator
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
+        # saving index's name
+        collection_name=f"IndexFLAT_{m['str']}_{language}"
+        row.append(collection_name)
+        # Milvus does not have an index generator
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     vector_store = Milvus(
-    #                 embedding_function= embeddings_model,
-    #                 collection_name= collection_name,
-    #                 connection_args={"uri": Milvus_URI},
-    #                 index_params={"index_type": "FLAT", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
-    #                 enable_dynamic_field= True
-    #             )
-    #     get_resources(row, time_start)
+        time_start, memory_start, cpu_start = get_resources()
+        vector_store = Milvus(
+                    embedding_function= embeddings_model,
+                    collection_name= collection_name,
+                    connection_args={"uri": Milvus_URI},
+                    index_params={"index_type": "FLAT", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
+                    enable_dynamic_field= True
+                )
+        get_resources(row, time_start)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     db = vector_store.from_documents(
-    #                         documents=documents, 
-    #                         embedding=embeddings_model,
-    #                         collection_name= collection_name,
-    #                         connection_args={"uri": Milvus_URI},
-    #                         index_params={"index_type": "FLAT", "metric_type": "COSINE"})
-    #     get_resources(row, time_start)
+        time_start, memory_start, cpu_start = get_resources()
+        db = vector_store.from_documents(
+                            documents=documents, 
+                            embedding=embeddings_model,
+                            collection_name= collection_name,
+                            connection_args={"uri": Milvus_URI},
+                            index_params={"index_type": "FLAT", "metric_type": "COSINE"})
+        get_resources(row, time_start)
 
-    #     # Milvus does not save locally
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
+        # Milvus does not save locally
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
-    #     # load data from database 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     milvus_db = Milvus(
-    #             embeddings_model,
-    #             connection_args={"uri": Milvus_URI},
-    #             collection_name= collection_name,
-    #         )
-    #     get_resources(row, time_start)
-    #     # saving data
-    #     df = pd.DataFrame([row])
+        # load data from database 
+        time_start, memory_start, cpu_start = get_resources()
+        milvus_db = Milvus(
+                embeddings_model,
+                connection_args={"uri": Milvus_URI},
+                collection_name= collection_name,
+            )
+        get_resources(row, time_start)
+        # saving data
+        df = pd.DataFrame([row])
 
-    #     with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-    #         # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
-    #         df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
         
-    #     time.sleep(5)
+        time.sleep(5)
 
-    #     # --------------------------------------------------------------------------------------
-    #     pprint('Creating Milvus index')
-    #     row = []
-    #     # saving model's name
-    #     row.append(m['name'])
+        # --------------------------------------------------------------------------------------
+        pprint('Creating Milvus index')
+        row = []
+        # saving model's name
+        row.append(m['name'])
         
-    #     # saving index's name
-    #     collection_name=f"IndexIVF_FLAT_{m['str']}_{language}"
-    #     row.append(collection_name)
-    #     # Milvus does not have an index generator
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     vector_store = Milvus(
-    #                 embedding_function= embeddings_model,
-    #                 collection_name= collection_name,
-    #                 connection_args={"uri": Milvus_URI},
-    #                 index_params={"index_type": "IVF_FLAT", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
-    #                 enable_dynamic_field= True
-    #             )
-    #     get_resources(row, time_start)
+        # saving index's name
+        collection_name=f"IndexIVF_FLAT_{m['str']}_{language}"
+        row.append(collection_name)
+        # Milvus does not have an index generator
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        time_start, memory_start, cpu_start = get_resources()
+        vector_store = Milvus(
+                    embedding_function= embeddings_model,
+                    collection_name= collection_name,
+                    connection_args={"uri": Milvus_URI},
+                    index_params={"index_type": "IVF_FLAT", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
+                    enable_dynamic_field= True
+                )
+        get_resources(row, time_start)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     db = vector_store.from_documents(
-    #                         documents=documents, 
-    #                         embedding=embeddings_model,
-    #                         collection_name= collection_name,
-    #                         connection_args={"uri": Milvus_URI},
-    #                         index_params={"index_type": "IVF_FLAT", "metric_type": "COSINE"})
-    #     get_resources(row, time_start)
+        time_start, memory_start, cpu_start = get_resources()
+        db = vector_store.from_documents(
+                            documents=documents, 
+                            embedding=embeddings_model,
+                            collection_name= collection_name,
+                            connection_args={"uri": Milvus_URI},
+                            index_params={"index_type": "IVF_FLAT", "metric_type": "COSINE"})
+        get_resources(row, time_start)
 
-    #     # Milvus does not save locally
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
+        # Milvus does not save locally
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
-    #     # load data from database 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     milvus_db = Milvus(
-    #             embeddings_model,
-    #             connection_args={"uri": Milvus_URI},
-    #             collection_name= collection_name,
-    #         )
-    #     get_resources(row, time_start)
+        # load data from database 
+        time_start, memory_start, cpu_start = get_resources()
+        milvus_db = Milvus(
+                embeddings_model,
+                connection_args={"uri": Milvus_URI},
+                collection_name= collection_name,
+            )
+        get_resources(row, time_start)
         
-    #     # saving data        
-    #     df = pd.DataFrame([row])
+        # saving data        
+        df = pd.DataFrame([row])
 
-    #     with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-    #         # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
-    #         df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-    #     time.sleep(5)
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        time.sleep(5)
 
-    #     # --------------------------------------------------------------------------------------
-    #     pprint('Creating Milvus index')
-    #     row = []
-    #     # saving model's name
-    #     row.append(m['name'])
+        # --------------------------------------------------------------------------------------
+        pprint('Creating Milvus index')
+        row = []
+        # saving model's name
+        row.append(m['name'])
         
-    #     # saving index's name
-    #     collection_name=f"IndexHNSW_{m['str']}_{language}"
-    #     row.append(collection_name)
-    #     # Milvus does not have an index generator
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     vector_store = Milvus(
-    #                 embedding_function= embeddings_model,
-    #                 collection_name= collection_name,
-    #                 connection_args={"uri": Milvus_URI},
-    #                 index_params={"index_type": "HNSW", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
-    #                 enable_dynamic_field= True
-    #             )
-    #     get_resources(row, time_start)
+        # saving index's name
+        collection_name=f"IndexHNSW_{m['str']}_{language}"
+        row.append(collection_name)
+        # Milvus does not have an index generator
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        time_start, memory_start, cpu_start = get_resources()
+        vector_store = Milvus(
+                    embedding_function= embeddings_model,
+                    collection_name= collection_name,
+                    connection_args={"uri": Milvus_URI},
+                    index_params={"index_type": "HNSW", "metric_type": "COSINE"}, #FLAT, HNSW, IVF_FLAT, IVF_PQ
+                    enable_dynamic_field= True
+                )
+        get_resources(row, time_start)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     db = vector_store.from_documents(
-    #                         documents=documents, 
-    #                         embedding=embeddings_model,
-    #                         collection_name= collection_name,
-    #                         connection_args={"uri": Milvus_URI},
-    #                         index_params={"index_type": "HNSW", "metric_type": "COSINE"})
-    #     get_resources(row, time_start)
-    #     # Milvus does not save locally
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
+        time_start, memory_start, cpu_start = get_resources()
+        db = vector_store.from_documents(
+                            documents=documents, 
+                            embedding=embeddings_model,
+                            collection_name= collection_name,
+                            connection_args={"uri": Milvus_URI},
+                            index_params={"index_type": "HNSW", "metric_type": "COSINE"})
+        get_resources(row, time_start)
+        # Milvus does not save locally
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
-    #     # load data from database 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     milvus_db = Milvus(
-    #             embeddings_model,
-    #             connection_args={"uri": Milvus_URI},
-    #             collection_name= collection_name,
-    #         )
-    #     get_resources(row, time_start)
-    #     # saving data
-    #     df = pd.DataFrame([row])
+        # load data from database 
+        time_start, memory_start, cpu_start = get_resources()
+        milvus_db = Milvus(
+                embeddings_model,
+                connection_args={"uri": Milvus_URI},
+                collection_name= collection_name,
+            )
+        get_resources(row, time_start)
+        # saving data
+        df = pd.DataFrame([row])
 
-    #     with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-    #         # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
-    #         df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-    #     time.sleep(5)
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        time.sleep(5)
 
-    #     # --------------------------------------------------------------------------------------
-    #     pprint('Creating Milvus index')
-    #     row = []
-    #     # saving model's name
-    #     row.append(m['name'])
+        # --------------------------------------------------------------------------------------
+        pprint('Creating Milvus index')
+        row = []
+        # saving model's name
+        row.append(m['name'])
         
-    #     # saving index's name
-    #     collection_name=f"IndexIVF_PQ_{m['str']}_{language}"
-    #     row.append(collection_name)
-    #     # Milvus does not have an index generator
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     vector_store = Milvus(
-    #                 embedding_function= embeddings_model,
-    #                 collection_name= collection_name,
-    #                 connection_args={"uri": Milvus_URI},
-    #                 index_params={
-    #                     "index_type": "IVF_PQ", 
-    #                     "metric_type": "COSINE", 
-    #                     "params": {
-    #                         "nlist": 1024,  # Número de listas
-    #                         "m": 8,         # Número de subcódigos
-    #                         "nbits": 8      # Número de bits por subcódigo
-    #                     }
-    #                 }, #FLAT, HNSW, IVF_FLAT, IVF_PQ
-    #                 enable_dynamic_field= True
-    #             )
-    #     get_resources(row, time_start)
+        # saving index's name
+        collection_name=f"IndexIVF_PQ_{m['str']}_{language}"
+        row.append(collection_name)
+        # Milvus does not have an index generator
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        time_start, memory_start, cpu_start = get_resources()
+        vector_store = Milvus(
+                    embedding_function= embeddings_model,
+                    collection_name= collection_name,
+                    connection_args={"uri": Milvus_URI},
+                    index_params={
+                        "index_type": "IVF_PQ", 
+                        "metric_type": "COSINE", 
+                        "params": {
+                            "nlist": 1024,  # Número de listas
+                            "m": 8,         # Número de subcódigos
+                            "nbits": 8      # Número de bits por subcódigo
+                        }
+                    }, #FLAT, HNSW, IVF_FLAT, IVF_PQ
+                    enable_dynamic_field= True
+                )
+        get_resources(row, time_start)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     db = vector_store.from_documents(
-    #                         documents=documents, 
-    #                         embedding=embeddings_model,
-    #                         collection_name= collection_name,
-    #                         connection_args={"uri": Milvus_URI},
-    #                         index_params={
-    #                             "index_type": "IVF_PQ", 
-    #                             "metric_type": "COSINE", 
-    #                             "params": {
-    #                                 "nlist": 1024,  # Número de listas
-    #                                 "m": 8,         # Número de subcódigos
-    #                                 "nbits": 8      # Número de bits por subcódigo
-    #                             }
-    #                         }
-    #                     )
-    #     get_resources(row, time_start)
-    #     # Milvus does not save locally
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
-    #     row.append(0)
+        time_start, memory_start, cpu_start = get_resources()
+        db = vector_store.from_documents(
+                            documents=documents, 
+                            embedding=embeddings_model,
+                            collection_name= collection_name,
+                            connection_args={"uri": Milvus_URI},
+                            index_params={
+                                "index_type": "IVF_PQ", 
+                                "metric_type": "COSINE", 
+                                "params": {
+                                    "nlist": 1024,  # Número de listas
+                                    "m": 8,         # Número de subcódigos
+                                    "nbits": 8      # Número de bits por subcódigo
+                                }
+                            }
+                        )
+        get_resources(row, time_start)
+        # Milvus does not save locally
+        row.append(0)
+        row.append(0)
+        row.append(0)
+        row.append(0)
 
-    #     # load data from database 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     milvus_db = Milvus(
-    #             embeddings_model,
-    #             connection_args={"uri": Milvus_URI},
-    #             collection_name= collection_name,
-    #         )
-    #     get_resources(row, time_start)
-    #     # saving data
-    #     df = pd.DataFrame([row])
+        # load data from database 
+        time_start, memory_start, cpu_start = get_resources()
+        milvus_db = Milvus(
+                embeddings_model,
+                connection_args={"uri": Milvus_URI},
+                collection_name= collection_name,
+            )
+        get_resources(row, time_start)
+        # saving data
+        df = pd.DataFrame([row])
 
-    #     with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-    #         # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
-    #         df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-    #     time.sleep(5)
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        time.sleep(5)
 
-    # # --------------------------------------------------------------------------------------
-    # # ANNOY --------------------------------------------------------------------------------
-    # # --------------------------------------------------------------------------------------
-    # for m in MODELS:
-    #     pprint('Creating ANNOY index')
-    #     row = []
-    #     # saving model's name
-    #     row.append(m['name'])
+    # --------------------------------------------------------------------------------------
+    # ANNOY --------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------
+    for m in MODELS:
+        embeddings_model= HuggingFaceEmbeddings(model_name=m['name'])
+        pprint('Creating ANNOY index')
+        row = []
+        # saving model's name
+        row.append(m['name'])
         
-    #     # saving index's name
-    #     index_name ='index' 
-    #     metric='angular' # metric: Literal['angular', 'euclidean', 'manhattan', 'hamming', 'dot']
-    #     folder_path=f"{PATH}/annoy_db/{metric}_{m['str']}_{language}"
-    #     row.append(folder_path)
+        # saving index's name
+        index_name ='index' 
+        metric='angular' # metric: Literal['angular', 'euclidean', 'manhattan', 'hamming', 'dot']
+        folder_path=f"{PATH}/annoy_db/{metric}_{m['str']}_{language}"
+        row.append(folder_path)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     index = AnnoyIndex(
-    #         f=m['size'], 
-    #         metric=metric) 
-    #     get_resources(row, time_start)
+        time_start, memory_start, cpu_start = get_resources()
+        index = AnnoyIndex(
+            f=m['size'], 
+            metric=metric) 
+        get_resources(row, time_start)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     vector_store = Annoy(
-    #         embedding_function= embeddings_model,
-    #         index=index,
-    #         metric=metric,
-    #         docstore=InMemoryDocstore(),
-    #         index_to_docstore_id={},
-    #     )
-    #     get_resources(row, time_start)
+        time_start, memory_start, cpu_start = get_resources()
+        vector_store = Annoy(
+            embedding_function= embeddings_model,
+            index=index,
+            metric=metric,
+            docstore=InMemoryDocstore(),
+            index_to_docstore_id={},
+        )
+        get_resources(row, time_start)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
-    #     get_resources(row, time_start)
+        time_start, memory_start, cpu_start = get_resources()
+        db = vector_store.from_documents(documents=documents, embedding=embeddings_model)
+        get_resources(row, time_start)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     db.save_local(folder_path=folder_path)
-    #     get_resources(row, time_start)
+        time_start, memory_start, cpu_start = get_resources()
+        db.save_local(folder_path=folder_path)
+        get_resources(row, time_start)
 
-    #     time_start, memory_start, cpu_start = get_resources()
-    #     db.load_local(folder_path=folder_path, embeddings=embeddings_model, allow_dangerous_deserialization=True)
-    #     get_resources(row, time_start)
+        time_start, memory_start, cpu_start = get_resources()
+        db.load_local(folder_path=folder_path, embeddings=embeddings_model, allow_dangerous_deserialization=True)
+        get_resources(row, time_start)
         
-    #     # saving data
-    #     df = pd.DataFrame([row])
+        # saving data
+        df = pd.DataFrame([row])
 
-    #     with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-    #         # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
-    #         df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
-    #     time.sleep(5)
+        with pd.ExcelWriter('../data/dataset-vector-space.xlsx', engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            # Escribir los nuevos datos al final de la hoja (por ejemplo, 'Hoja1')
+            df.to_excel(writer, sheet_name='Hoja1', index=False, header=False, startrow=writer.sheets['Hoja1'].max_row)
+        time.sleep(5)
 
 
     # --------------------------------------------------------------------------------------
     # CHROMA -------------------------------------------------------------------------------
     # --------------------------------------------------------------------------------------
-    embeddings_model= HuggingFaceEmbeddings(model_name=m['name'])
     for m in MODELS:
+        embeddings_model= HuggingFaceEmbeddings(model_name=m['name'])
         pprint('Creating CHROMA index')
         from langchain_chroma import Chroma
         row = []
