@@ -49,16 +49,6 @@ MODELS =[
         'size':int(384)
     },
     {
-        'name': 'sentence-transformers/paraphrase-xlm-r-multilingual-v1',
-        'str': 'paraphrase_xlm_r_multilingual_v1',
-        'size':int(768)
-    },
-    {
-        'name': 'sentence-transformers/all-mpnet-base-v2',
-        'str': 'all_mpnet_base_v2',
-        'size':int(768)
-    },
-    {
         'name': 'sentence-transformers/paraphrase-MiniLM-L6-v2',
         'str': 'paraphrase_MiniLM_L6_v2',
         'size':int(384)
@@ -67,6 +57,16 @@ MODELS =[
         'name': 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2',
         'str': 'paraphrase_multilingual_MiniLM_L12_v2',
         'size':int(384)
+    },
+    {
+        'name': 'sentence-transformers/paraphrase-xlm-r-multilingual-v1',
+        'str': 'paraphrase_xlm_r_multilingual_v1',
+        'size':int(768)
+    },
+    {
+        'name': 'sentence-transformers/all-mpnet-base-v2',
+        'str': 'all_mpnet_base_v2',
+        'size':int(768)
     },
     {
         'name': 'sentence-transformers/paraphrase-distilroberta-base-v2',
@@ -714,12 +714,12 @@ for language in LANGUAGE:
             collection_name= f"{index_name}_{m['str']}_{language}",
             embedding_function= embeddings_model,
             persist_directory= folder_path,  # Where to save data locally
-            collection_metadata={"hnsw:space": "cosine", "embedding_dim": m['size']} 
+            collection_metadata={"hnsw:space": "cosine"} 
         )
         get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources()
-        db = vector_store.from_documents(documents=documents, embedding=embeddings_model, collection_metadata={"hnsw:space": "cosine", "embedding_dim": m['size']})
+        db = vector_store.from_documents(documents=documents)
         get_resources(row, time_start)
 
         # Chroma does not have to calculate an index save time
