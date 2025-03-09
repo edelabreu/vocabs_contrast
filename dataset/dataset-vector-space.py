@@ -691,9 +691,9 @@ for language in LANGUAGE:
     # CHROMA -------------------------------------------------------------------------------
     # --------------------------------------------------------------------------------------
     for m in MODELS:
+        from langchain_chroma import Chroma
         embeddings_model= HuggingFaceEmbeddings(model_name=m['name'])
         pprint('Creating CHROMA index')
-        from langchain_chroma import Chroma
         row = []
         # saving model's name
         row.append(m['name'])
@@ -714,12 +714,12 @@ for language in LANGUAGE:
             collection_name= f"{index_name}_{m['str']}_{language}",
             embedding_function= embeddings_model,
             persist_directory= folder_path,  # Where to save data locally
-            collection_metadata={"hnsw:space": "cosine"} 
+            collection_metadata={"hnsw:space": "cosine", "embedding_dim": m['size']} 
         )
         get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources()
-        db = vector_store.from_documents(documents=documents, embedding=embeddings_model, collection_metadata={"hnsw:space": "cosine"})
+        db = vector_store.from_documents(documents=documents, embedding=embeddings_model, collection_metadata={"hnsw:space": "cosine", "embedding_dim": m['size']})
         get_resources(row, time_start)
 
         # Chroma does not have to calculate an index save time
