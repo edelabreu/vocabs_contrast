@@ -719,7 +719,7 @@ for language in LANGUAGE:
         get_resources(row, time_start)
 
         time_start, memory_start, cpu_start = get_resources()
-        db = vector_store.from_documents(documents=documents)
+        db = vector_store.from_documents(documents=documents, embedding= embeddings_model)
         get_resources(row, time_start)
 
         # Chroma does not have to calculate an index save time
